@@ -1,0 +1,70 @@
+name: LavozApp
+options:
+  bundleIdPrefix: cl.prioridad
+  deploymentTarget:
+    iOS: "15.0"
+  defaultConfig: Debug
+
+settings:
+  base:
+    PRODUCT_BUNDLE_IDENTIFIER: cl.prioridad.lavozapp
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: ""  # Agrega tu Team ID de Apple Developer aquí
+
+targets:
+  LavozApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: LavozApp
+    info:
+      path: LavozApp/Info.plist
+      properties:
+        CFBundleDisplayName: "La Voz APP"
+        CFBundleName: "La Voz APP"
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        CFBundleDevelopmentRegion: es
+        LSRequiresIPhoneOS: true
+        UIBackgroundModes:
+          - audio
+          - fetch
+          - remote-notification
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+          UIImageName: LaunchLogo
+        UIRequiredDeviceCapabilities:
+          - armv7
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+          NSExceptionDomains:
+            socios.lavozdepucon.cl:
+              NSExceptionAllowsInsecureHTTPLoads: false
+              NSIncludesSubdomains: true
+            live.mtna.tv:
+              NSExceptionAllowsInsecureHTTPLoads: false
+              NSIncludesSubdomains: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: cl.prioridad.lavozapp
+
+schemes:
+  LavozApp:
+    build:
+      targets:
+        LavozApp: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
