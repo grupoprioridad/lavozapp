@@ -2,6 +2,7 @@ import Foundation
 import AVKit
 import Combine
 import UserNotifications
+import MediaPlayer
 
 struct ShowInfo: Identifiable {
     let id: Int
@@ -53,6 +54,7 @@ class RadioPlayer: ObservableObject {
         player = AVPlayer(playerItem: AVPlayerItem(url: audioURL))
 
         setupPlaybackObserver()
+        setupRemoteControls()
         fetchLiveNow()
         fetchNowPlaying()
         checkAndSwitch()  // primera verificación inmediata
@@ -146,6 +148,7 @@ class RadioPlayer: ObservableObject {
                 if p.timeControlStatus != .waitingToPlayAtSpecifiedRate {
                     self?.isLoading = false
                 }
+                self?.updateNowPlaying()
             }
         }
     }
@@ -159,6 +162,7 @@ class RadioPlayer: ObservableObject {
                 self?.radioBossTitle = title
                 if let t = title, !t.isEmpty {
                     self?.currentTitle = t
+                    self?.updateNowPlaying()
                 }
             }
         }
@@ -234,6 +238,45 @@ class RadioPlayer: ObservableObject {
         if radioBossTitle == nil {
             currentTitle = liveShow?.title ?? "Música continua"
         }
+        updateNowPlaying()
+    }
+
+    // MARK: - Lock screen / Control Center
+
+    private func setupRemoteControls() {
+        let cmd = MPRemoteCommandCenter.shared()
+
+        cmd.playCommand.addTarget { [weak self] _ in
+            self?.play()
+            return .success
+        }
+        cmd.pauseCommand.addTarget { [weak self] _ in
+            self?.pause()
+            return .success
+        }
+        cmd.togglePlayPauseCommand.addTarget { [weak self] _ in
+            self?.toggle()
+            return .success
+        }
+        // La radio en vivo no tiene avance/retroceso
+        cmd.skipForwardCommand.isEnabled  = false
+        cmd.skipBackwardCommand.isEnabled = false
+        cmd.nextTrackCommand.isEnabled    = false
+        cmd.previousTrackCommand.isEnabled = false
+    }
+
+    func updateNowPlaying() {
+        var info: [String: Any] = [
+            MPMediaItemPropertyTitle:            currentTitle,
+            MPMediaItemPropertyArtist:           "Radio La Voz de Pucón",
+            MPNowPlayingInfoPropertyIsLiveStream: true,
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0
+        ]
+        // Artwork: logo de la radio
+        if let image = UIImage(named: "logo-radio") {
+            info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+        }
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 
     deinit {
