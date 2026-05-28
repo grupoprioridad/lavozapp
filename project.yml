@@ -19,7 +19,13 @@ targets:
     platform: iOS
     deploymentTarget: "15.0"
     sources:
-      - path: LavozApp
+      - path: LavozApp/LavozApp.swift
+      - path: LavozApp/ContentView.swift
+      - path: LavozApp/Models
+      - path: LavozApp/Services
+      - path: LavozApp/Theme
+      - path: LavozApp/Views
+      - path: LavozApp/Assets.xcassets
     info:
       path: LavozApp/Info.plist
       properties:
