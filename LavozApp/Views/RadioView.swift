@@ -70,7 +70,7 @@ struct RadioView: View {
                 Circle().fill(Color.lvpRed).frame(width: 7, height: 7)
                 Text("EN VIVO")
                     .font(.lvpMicro)
-                    .tracking(1.2)
+                    .spaced(1.2)
                     .foregroundColor(.lvpRed)
             }
             Spacer()
@@ -92,7 +92,7 @@ struct RadioView: View {
                 Rectangle().fill(Color.lvpRed).frame(height: 1.5).frame(maxWidth: 50)
                 Text("RADIO")
                     .font(.custom("Bebas Neue", size: 16))
-                    .tracking(5)
+                    .spaced(5)
                     .foregroundColor(.lvpRed)
                 Rectangle().fill(Color.lvpRed).frame(height: 1.5).frame(maxWidth: 50)
             }
@@ -102,7 +102,7 @@ struct RadioView: View {
                 .lineSpacing(0)
             Text("DE PUCÓN")
                 .font(.custom("Bebas Neue", size: 28))
-                .tracking(6)
+                .spaced(6)
                 .foregroundColor(.lvpDark)
             HStack(spacing: 4) {
                 ForEach(0..<7, id: \.self) { i in
@@ -163,7 +163,7 @@ struct RadioView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Al aire ahora")
                             .font(.lvpMicro)
-                            .tracking(1.5)
+                            .spaced(1.5)
                             .foregroundColor(.lvpRed)
                         Text(player.currentTitle)
                             .font(.custom("Bebas Neue", size: 18))
@@ -180,7 +180,7 @@ struct RadioView: View {
                             .font(.title2)
                         Text(player.isPlaying ? "Pausar" : "Escuchar en vivo")
                             .font(.custom("Bebas Neue", size: 20))
-                            .tracking(2)
+                            .spaced(2)
                     }
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -230,7 +230,7 @@ struct RadioView: View {
 
                 Text("Pucón, Chile")
                     .font(.lvpMicro)
-                    .tracking(1)
+                    .spaced(1)
                     .foregroundColor(.lvpTextMuted)
             }
         }
@@ -245,7 +245,7 @@ struct RadioView: View {
                 Circle().fill(Color.lvpRed).frame(width: 8, height: 8)
                 Text("AL AIRE AHORA")
                     .font(.lvpMicro)
-                    .tracking(1.5)
+                    .spaced(1.5)
                     .foregroundColor(.lvpRed)
             }
 
@@ -314,7 +314,7 @@ struct RadioView: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text("A continuación")
                                 .font(.lvpMicro)
-                                .tracking(1)
+                                .spaced(1)
                                 .foregroundColor(.lvpBlue)
                             Text(next.title)
                                 .font(.custom("Bebas Neue", size: 15))
@@ -345,7 +345,7 @@ struct RadioView: View {
             VStack(spacing: 4) {
                 Text("PROGRAMACIÓN")
                     .font(.custom("Bebas Neue", size: 14))
-                    .tracking(3)
+                    .spaced(3)
                     .foregroundColor(.lvpRed)
                 Text("La parrilla de la semana")
                     .font(.custom("Anton", size: 22))
@@ -360,7 +360,7 @@ struct RadioView: View {
                         Button(action: { selectedDay = day.key }) {
                             Text(day.label)
                                 .font(.lvpBadge)
-                                .tracking(1)
+                                .spaced(1)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
                                 .background(selectedDay == day.key ? Color.lvpRed : Color.white)
@@ -460,7 +460,7 @@ struct RadioView: View {
         HStack(spacing: 8) {
             Text("COMPARTIR")
                 .font(.lvpMicro)
-                .tracking(1.2)
+                .spaced(1.2)
                 .foregroundColor(.lvpTextMuted)
             shareBtn("facebook", color: "#1877f2")
             shareBtn("twitter", color: "#000000")
@@ -486,7 +486,7 @@ struct RadioView: View {
         VStack(spacing: 4) {
             Text("INFORMAMOS · CONECTAMOS · ACOMPAÑAMOS")
                 .font(.lvpMicro)
-                .tracking(2.5)
+                .spaced(2.5)
                 .foregroundColor(.lvpTextMuted)
                 .multilineTextAlignment(.center)
             Text("La radio que se ve y se escucha desde Pucón")

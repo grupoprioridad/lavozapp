@@ -154,7 +154,7 @@ struct SocioLVPView: View {
                 VStack(spacing: 4) {
                     Text("RADIO LA VOZ DE PUCÓN")
                         .font(.lvpMicro)
-                        .tracking(2)
+                        .spaced(2)
                         .foregroundColor(.white.opacity(0.8))
                     Text("SOCIOS")
                         .font(.custom("Anton", size: 28))
@@ -186,7 +186,7 @@ struct SocioLVPView: View {
                         .foregroundColor(p.suscripcionActiva ? .lvpGreen : .lvpRed)
                     Text(p.suscripcionActiva ? "MEMBRESÍA ACTIVA" : "MEMBRESÍA INACTIVA")
                         .font(.lvpBadge)
-                        .tracking(1.5)
+                        .spaced(1.5)
                         .foregroundColor(p.suscripcionActiva ? .lvpGreen : .lvpRed)
                 }
                 .padding(.bottom, 4)
@@ -213,7 +213,7 @@ struct SocioLVPView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("BENEFICIOS DISPONIBLES")
                         .font(.lvpCaption)
-                        .tracking(1.5)
+                        .spaced(1.5)
                         .foregroundColor(.lvpRed)
                         .padding(.horizontal, 24)
                     

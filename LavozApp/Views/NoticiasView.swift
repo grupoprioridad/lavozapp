@@ -122,7 +122,6 @@ struct NoticiaFeaturedCard: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("DESTACADO", systemImage: "star.fill")
                         .font(.system(size: 10, weight: .bold))
-                        .tracking(1)
                         .foregroundColor(.white)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -143,7 +142,7 @@ struct NoticiaFeaturedCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text(noticia.fechaDisplay.uppercased())
                     .font(.system(size: 11, weight: .semibold))
-                    .tracking(0.5)
+                    .spaced(0.5)
                     .foregroundColor(.lvpRed)
 
                 if !noticia.extracto.isEmpty {
@@ -184,7 +183,7 @@ struct NoticiaCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(noticia.fechaDisplay.uppercased())
                     .font(.system(size: 11, weight: .semibold))
-                    .tracking(0.5)
+                    .spaced(0.5)
                     .foregroundColor(.lvpRed)
 
                 Text(noticia.titulo)

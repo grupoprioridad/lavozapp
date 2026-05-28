@@ -1,5 +1,16 @@
 import SwiftUI
 
+extension Text {
+    // .tracking() and .kerning() resolve to the View version (iOS 16+) due to
+    // type inference. This wrapper forces the Text version which is iOS 14+.
+    func spaced(_ value: CGFloat) -> Text {
+        if #available(iOS 16, *) {
+            return self.tracking(value)
+        }
+        return self
+    }
+}
+
 extension Font {
     static let lvpDisplay = Font.custom("Georgia", size: 42)
     static let lvpDisplayLarge = Font.custom("Georgia", size: 64)
