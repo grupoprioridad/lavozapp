@@ -1,6 +1,7 @@
 import Foundation
 import AVKit
 import Combine
+import UserNotifications
 
 struct ShowInfo: Identifiable {
     let id: Int
@@ -91,6 +92,7 @@ class RadioPlayer: ObservableObject {
     private func activateVideoMode() {
         guard currentMode != .video else { return }
         currentMode = .video
+        sendLiveNotification()
         let wasPlaying = isPlaying
         sizeObserver?.invalidate()
         let item = AVPlayerItem(url: videoURL)
@@ -108,6 +110,21 @@ class RadioPlayer: ObservableObject {
         let item = AVPlayerItem(url: audioURL)
         player.replaceCurrentItem(with: item)
         if wasPlaying { player.play() }
+    }
+
+    // MARK: - Notificación de video en vivo
+
+    private func sendLiveNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "Radio La Voz de Pucón"
+        content.body  = "Hay contenido en vivo en La Voz de Pucón"
+        content.sound = .default
+        let request = UNNotificationRequest(
+            identifier: "lvp-live-video",
+            content: content,
+            trigger: nil  // entrega inmediata
+        )
+        UNUserNotificationCenter.current().add(request)
     }
 
     // MARK: - Video detection
