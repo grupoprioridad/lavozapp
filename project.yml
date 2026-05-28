@@ -29,8 +29,8 @@ targets:
     info:
       path: LavozApp/Info.plist
       properties:
-        CFBundleDisplayName: "La Voz APP"
-        CFBundleName: "La Voz APP"
+        CFBundleDisplayName: "PuconApp"
+        CFBundleName: "PuconApp"
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         CFBundleDevelopmentRegion: es
