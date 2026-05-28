@@ -20,13 +20,6 @@ struct NoticiasView: View {
             }
             .navigationTitle("Noticias de Pucón")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Noticias de Pucón")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.lvpDark)
-                }
-            }
         }
         .task { await service.fetch() }
     }
@@ -37,11 +30,15 @@ struct NoticiasView: View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 ForEach(Array(service.noticias.enumerated()), id: \.element.id) { index, noticia in
-                    if index == 0 {
-                        NoticiaFeaturedCard(noticia: noticia)
-                    } else {
-                        NoticiaCard(noticia: noticia)
+                    Group {
+                        if index == 0 {
+                            NoticiaFeaturedCard(noticia: noticia)
+                        } else {
+                            NoticiaCard(noticia: noticia)
+                        }
                     }
+                    .contentShape(Rectangle())
+                    .onTapGesture { UIApplication.shared.open(noticia.url) }
                 }
             }
             .padding(.horizontal, 16)
@@ -262,13 +259,11 @@ private var imagePlaceholder: some View {
 }
 
 private func readMoreLink(url: URL, size: CGFloat) -> some View {
-    Link(destination: url) {
-        HStack(spacing: 4) {
-            Text("Leer nota completa")
-            Image(systemName: "arrow.right")
-                .font(.system(size: size - 1, weight: .semibold))
-        }
-        .font(.system(size: size, weight: .semibold))
-        .foregroundColor(.lvpRed)
+    HStack(spacing: 4) {
+        Text("Leer nota completa")
+        Image(systemName: "arrow.right")
+            .font(.system(size: size - 1, weight: .semibold))
     }
+    .font(.system(size: size, weight: .semibold))
+    .foregroundColor(.lvpRed)
 }

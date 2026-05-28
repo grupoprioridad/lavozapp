@@ -21,7 +21,7 @@ struct LavozApp: App {
     init() {
         setupAudio()
         setupNotifications()
-        // OneSignal se inicializa después del delegate local para que lo encadene
+        setupNavBarAppearance()
         OneSignal.initialize("8fda1981-467e-4533-b85a-ba8d8e63057f", withLaunchOptions: nil)
         OneSignal.Notifications.requestPermission({ _ in }, fallbackToSettings: true)
     }
@@ -41,6 +41,17 @@ struct LavozApp: App {
         } catch {
             print("Audio session error: \(error)")
         }
+    }
+
+    private func setupNavBarAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor.systemBackground
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.label]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.label]
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
     }
 
     private func setupNotifications() {

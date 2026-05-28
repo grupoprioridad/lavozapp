@@ -17,8 +17,8 @@ struct ContentView: View {
 
             SocioLVPView()
                 .tabItem {
-                    Image(systemName: "person.crop.circle")
-                    Text("Socio LVP")
+                    Image(systemName: "gift.fill")
+                    Text("Beneficios")
                 }
         }
         .tint(Color.lvpRed)
