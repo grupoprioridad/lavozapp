@@ -46,12 +46,13 @@ struct LavozApp: App {
     private func setupNavBarAppearance() {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor.systemBackground
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.label]
-        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.label]
+        appearance.backgroundColor = UIColor(red: 0.97, green: 0.97, blue: 0.97, alpha: 1)
+        appearance.titleTextAttributes = [.foregroundColor: UIColor(red: 0.07, green: 0.07, blue: 0.07, alpha: 1)]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor(red: 0.07, green: 0.07, blue: 0.07, alpha: 1)]
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
+        UINavigationBar.appearance().tintColor = UIColor(red: 0.80, green: 0.08, blue: 0.08, alpha: 1)
     }
 
     private func setupNotifications() {
