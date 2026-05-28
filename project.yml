@@ -1,4 +1,10 @@
 name: LavozApp
+
+packages:
+  OneSignal:
+    url: https://github.com/OneSignal/OneSignal-iOS-SDK
+    from: "5.2.2"
+
 options:
   bundleIdPrefix: cl.prioridad
   deploymentTarget:
@@ -49,9 +55,14 @@ targets:
             live.mtna.tv:
               NSExceptionAllowsInsecureHTTPLoads: false
               NSIncludesSubdomains: true
+    dependencies:
+      - package: OneSignal
+        product: OneSignalFramework
+
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: cl.prioridad.lavozapp
+        CODE_SIGN_ENTITLEMENTS: LavozApp/LavozApp.entitlements
 
 schemes:
   LavozApp:

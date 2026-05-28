@@ -1,6 +1,7 @@
 import SwiftUI
 import AVFoundation
 import UserNotifications
+import OneSignalFramework
 
 private class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     // Muestra la notificación aunque la app esté en primer plano
@@ -20,6 +21,9 @@ struct LavozApp: App {
     init() {
         setupAudio()
         setupNotifications()
+        // OneSignal se inicializa después del delegate local para que lo encadene
+        OneSignal.initialize("8fda1981-467e-4533-b85a-ba8d8e63057f", withLaunchOptions: nil)
+        OneSignal.Notifications.requestPermission({ _ in }, fallbackToSettings: true)
     }
 
     var body: some Scene {
