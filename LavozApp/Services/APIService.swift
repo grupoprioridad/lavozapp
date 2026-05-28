@@ -17,23 +17,28 @@ enum APIError: LocalizedError {
 class APIService: ObservableObject {
     static let shared = APIService()
     private let baseURL = "https://socios.lavozdepucon.cl/api"
-    
+
     func login(email: String) async throws -> AuthLoginResponse {
         try await post("/auth/login", body: ["email": email])
     }
-    
+
     func verify(email: String, codigo: String) async throws -> AuthVerifyResponse {
         try await post("/auth/verify", body: ["email": email, "codigo": codigo])
     }
-    
+
+    // Resend = request a new code by calling login again
     func resend(email: String) async throws -> AuthLoginResponse {
-        try await post("/auth/verify", body: ["email": email, "resend": true])
+        try await post("/auth/login", body: ["email": email])
     }
-    
+
     func getPerfil(token: String) async throws -> PerfilResponse {
         try await getAuth("/perfil", token: token)
     }
-    
+
+    func getBeneficios(token: String) async throws -> BeneficiosResponse {
+        try await getAuth("/beneficios", token: token)
+    }
+
     private func getAuth<T: Decodable>(_ endpoint: String, token: String) async throws -> T {
         guard let url = URL(string: baseURL + endpoint) else { throw APIError.invalidURL }
         var req = URLRequest(url: url)
@@ -42,7 +47,7 @@ class APIService: ObservableObject {
         if let http = resp as? HTTPURLResponse, http.statusCode == 401 { throw APIError.unauthorized }
         return try JSONDecoder().decode(T.self, from: data)
     }
-    
+
     private func post<T: Decodable>(_ endpoint: String, body: [String: Any]) async throws -> T {
         guard let url = URL(string: baseURL + endpoint) else { throw APIError.invalidURL }
         var req = URLRequest(url: url)
