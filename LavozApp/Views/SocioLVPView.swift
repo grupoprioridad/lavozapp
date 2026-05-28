@@ -30,12 +30,12 @@ struct SocioLVPView: View {
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.lvpDark)
                 }
-                if auth.isLoggedIn {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Salir") { auth.logout() }
-                            .font(.lvpBodyMedium)
-                            .foregroundColor(.lvpRed)
-                    }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Salir") { auth.logout() }
+                        .font(.lvpBodyMedium)
+                        .foregroundColor(.lvpRed)
+                        .opacity(auth.isLoggedIn ? 1 : 0)
+                        .allowsHitTesting(auth.isLoggedIn)
                 }
             }
         }
