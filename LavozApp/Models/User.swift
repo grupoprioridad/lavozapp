@@ -10,6 +10,12 @@ struct LVPUser: Codable {
     let suscripcionExpira: String?
     let qrData: String?
 
+    // Nombre display: the API may return "" instead of null
+    var nombreDisplay: String {
+        if let n = nombre, !n.isEmpty { return n }
+        return "Socio LVP"
+    }
+
     enum CodingKeys: String, CodingKey {
         case id, email, nombre, token, telefono
         case suscripcionActiva = "suscripcion_activa"

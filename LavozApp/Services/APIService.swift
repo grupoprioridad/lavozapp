@@ -6,7 +6,7 @@ enum APIError: LocalizedError {
         switch self {
         case .invalidURL: return "URL inválida"
         case .network(let e): return "Error de red: \(e.localizedDescription)"
-        case .decoding: return "Error procesando respuesta"
+        case .decoding: return "Error al procesar la respuesta del servidor"
         case .server(let m): return m
         case .unauthorized: return "Sesión expirada"
         }
@@ -26,7 +26,6 @@ class APIService: ObservableObject {
         try await post("/auth/verify", body: ["email": email, "codigo": codigo])
     }
 
-    // Resend = request a new code by calling login again
     func resend(email: String) async throws -> AuthLoginResponse {
         try await post("/auth/login", body: ["email": email])
     }
@@ -44,8 +43,14 @@ class APIService: ObservableObject {
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         let (data, resp) = try await URLSession.shared.data(for: req)
-        if let http = resp as? HTTPURLResponse, http.statusCode == 401 { throw APIError.unauthorized }
-        return try JSONDecoder().decode(T.self, from: data)
+        guard let http = resp as? HTTPURLResponse else { throw APIError.network(URLError(.badServerResponse)) }
+        if http.statusCode == 401 { throw APIError.unauthorized }
+        guard data.count > 0 else { throw APIError.server("El servidor no respondió correctamente (código \(http.statusCode))") }
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            throw APIError.decoding(error)
+        }
     }
 
     private func post<T: Decodable>(_ endpoint: String, body: [String: Any]) async throws -> T {
@@ -54,7 +59,13 @@ class APIService: ObservableObject {
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: body)
-        let (data, _) = try await URLSession.shared.data(for: req)
-        return try JSONDecoder().decode(T.self, from: data)
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse else { throw APIError.network(URLError(.badServerResponse)) }
+        guard data.count > 0 else { throw APIError.server("El servidor no respondió correctamente (código \(http.statusCode))") }
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            throw APIError.decoding(error)
+        }
     }
 }

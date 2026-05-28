@@ -8,7 +8,13 @@ struct ContentView: View {
                     Image(systemName: "radio.fill")
                     Text("La Radio")
                 }
-            
+
+            NoticiasView()
+                .tabItem {
+                    Image(systemName: "newspaper.fill")
+                    Text("Noticias")
+                }
+
             SocioLVPView()
                 .tabItem {
                     Image(systemName: "person.crop.circle")

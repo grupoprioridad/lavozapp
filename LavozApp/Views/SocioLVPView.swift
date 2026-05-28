@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreImage.CIFilterBuiltins
 
 struct SocioLVPView: View {
     @EnvironmentObject var auth: AuthService
@@ -163,21 +164,9 @@ struct SocioLVPView: View {
                 .padding(.vertical, 20)
                 .background(Color.lvpRed)
                 
-                // Photo
-                ZStack {
-                    Circle()
-                        .fill(Color.lvpGray100)
-                        .frame(width: 80, height: 80)
-                    Image(systemName: "person.fill")
-                        .font(.title)
-                        .foregroundColor(.lvpGray500)
-                }
-                .offset(y: -40)
-                .padding(.bottom, -40)
-                
                 // Info
                 VStack(spacing: 4) {
-                    Text(p.nombre ?? "Socio LVP")
+                    Text(p.nombreDisplay)
                         .font(.lvpHeadline)
                         .foregroundColor(.lvpDark)
                     
@@ -208,31 +197,10 @@ struct SocioLVPView: View {
                         .foregroundColor(.lvpTextMuted)
                 }
                 
-                // QR
-                if let qr = p.qrData, let url = URL(string: qr) {
-                    AsyncImage(url: url) { img in
-                        img.resizable().scaledToFit()
-                    } placeholder: {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.lvpGray100)
-                            .frame(width: 120, height: 120)
-                            .overlay(ProgressView())
-                    }
-                    .frame(width: 120, height: 120)
+                // QR — generated locally from the verification URL
+                qrView(for: p.qrData)
                     .padding(.top, 12)
                     .padding(.bottom, 20)
-                } else {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.lvpGray100)
-                        .frame(width: 120, height: 120)
-                        .overlay(
-                            Image(systemName: "qrcode")
-                                .font(.largeTitle)
-                                .foregroundColor(.lvpGray500)
-                        )
-                        .padding(.top, 12)
-                        .padding(.bottom, 20)
-                }
             }
             .background(Color.white)
             .cornerRadius(12)
@@ -298,6 +266,37 @@ struct SocioLVPView: View {
         Task { _ = await auth.verify(codigo: codigo) }
     }
     
+    @ViewBuilder
+    private func qrView(for data: String?) -> some View {
+        if let data, !data.isEmpty, let img = generateQR(from: data) {
+            Image(uiImage: img)
+                .interpolation(.none)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 120, height: 120)
+        } else {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.lvpGray100)
+                .frame(width: 120, height: 120)
+                .overlay(
+                    Image(systemName: "qrcode")
+                        .font(.largeTitle)
+                        .foregroundColor(.lvpGray500)
+                )
+        }
+    }
+
+    private func generateQR(from string: String) -> UIImage? {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = Data(string.utf8)
+        filter.correctionLevel = "M"
+        guard let output = filter.outputImage else { return nil }
+        let scaled = output.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
+        guard let cgImage = context.createCGImage(scaled, from: scaled.extent) else { return nil }
+        return UIImage(cgImage: cgImage)
+    }
+
     private func formatDate(_ s: String) -> String {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
