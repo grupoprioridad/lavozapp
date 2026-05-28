@@ -30,23 +30,97 @@ class RadioPlayer: ObservableObject {
     @Published var nextShow: ShowInfo?
 
     let player: AVPlayer
+
+    private enum StreamMode { case audio, video }
+    private var currentMode: StreamMode = .audio
+    private var radioBossTitle: String? = nil
+
+    // Audio: Icecast MP3 (siempre disponible)
+    // Video: HLS (solo cuando hay señal de video)
+    private let audioURL = URL(string: "https://live.lavozdepucon.cl:8000/stream.mp3")!
+    private let videoURL = URL(string: "https://live.mtna.tv/hls/lvp/primary/index.m3u8")!
+    private let apiBase  = "https://j.prioridad.cl/radiolavoz"
+
     private var playerObserver: NSKeyValueObservation?
     private var sizeObserver: NSKeyValueObservation?
-    private var refreshTimer: Timer?
-
-    private let streamURL = URL(string: "https://live.mtna.tv/hls/lvp/lvp.m3u8")!
-    private let apiBase = "https://j.prioridad.cl/radiolavoz"
+    private var healthTimer: Timer?
+    private var nowPlayingTimer: Timer?
+    private var scheduleTimer: Timer?
 
     private init() {
-        let item = AVPlayerItem(url: streamURL)
-        player = AVPlayer(playerItem: item)
+        // Arrancar siempre en modo audio (igual que el web)
+        player = AVPlayer(playerItem: AVPlayerItem(url: audioURL))
+
         setupPlaybackObserver()
-        setupVideoDetection(for: item)
         fetchLiveNow()
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+        fetchNowPlaying()
+        checkAndSwitch()  // primera verificación inmediata
+
+        healthTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            self?.checkAndSwitch()
+        }
+        nowPlayingTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
+            self?.fetchNowPlaying()
+        }
+        scheduleTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             self?.fetchLiveNow()
         }
     }
+
+    // MARK: - Playback control
+
+    func play()   { isLoading = true; player.play() }
+    func pause()  { player.pause() }
+    func toggle() { isPlaying ? pause() : play() }
+
+    // MARK: - Stream switching (replica checkAndSwitch del web)
+
+    private func checkAndSwitch() {
+        fetch(endpoint: "/api/stream-health") { [weak self] json in
+            let videoAvailable = json["video"] as? Bool ?? false
+            DispatchQueue.main.async {
+                if videoAvailable {
+                    self?.activateVideoMode()
+                } else {
+                    self?.activateAudioMode()
+                }
+            }
+        }
+    }
+
+    private func activateVideoMode() {
+        guard currentMode != .video else { return }
+        currentMode = .video
+        let wasPlaying = isPlaying
+        sizeObserver?.invalidate()
+        let item = AVPlayerItem(url: videoURL)
+        player.replaceCurrentItem(with: item)
+        setupVideoDetection(for: item)
+        if wasPlaying { player.play() }
+    }
+
+    private func activateAudioMode() {
+        guard currentMode != .audio else { return }
+        currentMode = .audio
+        hasVideo = false
+        let wasPlaying = isPlaying
+        sizeObserver?.invalidate()
+        let item = AVPlayerItem(url: audioURL)
+        player.replaceCurrentItem(with: item)
+        if wasPlaying { player.play() }
+    }
+
+    // MARK: - Video detection
+
+    private func setupVideoDetection(for item: AVPlayerItem) {
+        sizeObserver = item.observe(\.presentationSize, options: [.new, .initial]) { [weak self] item, _ in
+            DispatchQueue.main.async {
+                self?.hasVideo = item.presentationSize.width > 0
+            }
+        }
+    }
+
+    // MARK: - Playback observer
 
     private func setupPlaybackObserver() {
         playerObserver = player.observe(\.timeControlStatus, options: [.new]) { [weak self] p, _ in
@@ -59,18 +133,21 @@ class RadioPlayer: ObservableObject {
         }
     }
 
-    // Detecta si el stream tiene video real (presentationSize > 0 significa que hay video)
-    private func setupVideoDetection(for item: AVPlayerItem) {
-        sizeObserver = item.observe(\.presentationSize, options: [.new, .initial]) { [weak self] item, _ in
+    // MARK: - API: Now Playing (RadioBoss via Icecast)
+
+    private func fetchNowPlaying() {
+        fetch(endpoint: "/api/now-playing") { [weak self] json in
+            let title = json["title"] as? String
             DispatchQueue.main.async {
-                self?.hasVideo = item.presentationSize.width > 0
+                self?.radioBossTitle = title
+                if let t = title, !t.isEmpty {
+                    self?.currentTitle = t
+                }
             }
         }
     }
 
-    func play() { isLoading = true; player.play() }
-    func pause() { player.pause() }
-    func toggle() { isPlaying ? pause() : play() }
+    // MARK: - API: Schedule (programación)
 
     func fetchLiveNow() {
         fetch(endpoint: "/api/schedule") { [weak self] json in
@@ -96,6 +173,8 @@ class RadioPlayer: ObservableObject {
         }
     }
 
+    // MARK: - Private helpers
+
     private func fetch(endpoint: String, completion: @escaping ([String: Any]) -> Void) {
         guard let url = URL(string: apiBase + endpoint) else { return }
         URLSession.shared.dataTask(with: url) { data, _, _ in
@@ -116,10 +195,8 @@ class RadioPlayer: ObservableObject {
                 thumbnail: live["thumbnail"] as? String,
                 isLive: true
             )
-            currentTitle = liveShow!.title
         } else {
             liveShow = nil
-            currentTitle = "Música continua"
         }
 
         if let next = json["nextShow"] as? [String: Any] {
@@ -135,11 +212,18 @@ class RadioPlayer: ObservableObject {
         } else {
             nextShow = nil
         }
+
+        // RadioBoss tiene prioridad; si no hay, usar título del programa
+        if radioBossTitle == nil {
+            currentTitle = liveShow?.title ?? "Música continua"
+        }
     }
 
     deinit {
         playerObserver?.invalidate()
         sizeObserver?.invalidate()
-        refreshTimer?.invalidate()
+        healthTimer?.invalidate()
+        nowPlayingTimer?.invalidate()
+        scheduleTimer?.invalidate()
     }
 }
