@@ -90,6 +90,7 @@ struct SocioLVPView: View {
                 .frame(height: 48)
                 .background(email.isEmpty ? Color.lvpGray200 : Color.lvpRed)
                 .cornerRadius(8)
+                .contentShape(Rectangle())
                 .disabled(email.isEmpty || auth.isLoading)
                 .padding(.horizontal, 24)
                 
@@ -126,6 +127,7 @@ struct SocioLVPView: View {
                 .frame(height: 48)
                 .background(codigo.isEmpty ? Color.lvpGray200 : Color.lvpRed)
                 .cornerRadius(8)
+                .contentShape(Rectangle())
                 .disabled(codigo.isEmpty || auth.isLoading)
                 .padding(.horizontal, 24)
                 
