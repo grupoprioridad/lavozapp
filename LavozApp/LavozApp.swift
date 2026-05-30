@@ -1,5 +1,5 @@
 import SwiftUI
-import AVFoundation
+import AVKit
 import UserNotifications
 import OneSignalFramework
 
@@ -9,6 +9,53 @@ private class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner, .sound])
+    }
+}
+
+// MARK: - Present fullscreen video with rotation support
+
+func presentFullscreenVideo(_ player: AVPlayer) {
+    guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+          let root = scene.windows.first?.rootViewController else { return }
+
+    let playerVC = AVPlayerViewController()
+    playerVC.player = player
+    playerVC.showsPlaybackControls = true
+    playerVC.videoGravity = .resizeAspect
+    playerVC.updatesNowPlayingInfoCenter = false
+    playerVC.delegate = FullscreenDelegate.shared
+
+    let container = FullscreenContainerVC()
+    container.addChild(playerVC)
+    container.view.addSubview(playerVC.view)
+    playerVC.view.frame = container.view.bounds
+    playerVC.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    playerVC.didMove(toParent: container)
+
+    container.modalPresentationStyle = .fullScreen
+    root.present(container, animated: true)
+}
+
+private class FullscreenContainerVC: UIViewController {
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .allButUpsideDown }
+    override var shouldAutorotate: Bool { true }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        UIDevice.current.setValue(UIDeviceOrientation.landscapeLeft.rawValue, forKey: "orientation")
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        UIDevice.current.setValue(UIDeviceOrientation.portrait.rawValue, forKey: "orientation")
+    }
+}
+
+private class FullscreenDelegate: NSObject, AVPlayerViewControllerDelegate {
+    static let shared = FullscreenDelegate()
+
+    func playerViewControllerDidDismiss(_ playerViewController: AVPlayerViewController) {
+        UIDevice.current.setValue(UIDeviceOrientation.portrait.rawValue, forKey: "orientation")
     }
 }
 

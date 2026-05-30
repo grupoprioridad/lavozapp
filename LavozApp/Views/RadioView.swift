@@ -11,7 +11,7 @@ struct RadioView: View {
     }()
     @State private var schedule: [ShowInfo] = []
     @State private var scheduleLoading = true
-    @State private var showFullscreenVideo = false
+
 
     private let days: [(key: String, label: String)] = [
         ("monday","LUN"),("tuesday","MAR"),("wednesday","MIÉ"),
@@ -53,9 +53,6 @@ struct RadioView: View {
                         .foregroundColor(.lvpDark)
                 }
             }
-        }
-        .fullScreenCover(isPresented: $showFullscreenVideo) {
-            FullscreenVideoView(player: player.player)
         }
         .onAppear {
             if !player.isPlaying { player.play() }
@@ -132,7 +129,7 @@ struct RadioView: View {
                             .frame(height: 200)
 
                         Button {
-                            showFullscreenVideo = true
+                            presentFullscreenVideo(player.player)
                         } label: {
                             Image(systemName: "arrow.up.backward.and.arrow.down.forward")
                                 .font(.system(size: 13, weight: .bold))
@@ -563,52 +560,7 @@ struct RadioVideoView: UIViewControllerRepresentable {
     }
 }
 
-// MARK: - Fullscreen Video
 
-struct FullscreenVideoView: View {
-    let player: AVPlayer
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        FullscreenPlayerVC(player: player, dismiss: dismiss)
-            .ignoresSafeArea()
-            .statusBarHidden()
-    }
-}
-
-struct FullscreenPlayerVC: UIViewControllerRepresentable {
-    let player: AVPlayer
-    let dismiss: DismissAction
-
-    func makeUIViewController(context: Context) -> AVPlayerViewController {
-        let c = AVPlayerViewController()
-        c.player = player
-        c.showsPlaybackControls = true
-        c.videoGravity = .resizeAspect
-        c.updatesNowPlayingInfoCenter = false
-        c.entersFullScreenWhenPlaybackBegins = true
-        c.delegate = context.coordinator
-        return c
-    }
-
-    func updateUIViewController(_ c: AVPlayerViewController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(dismiss: dismiss)
-    }
-
-    class Coordinator: NSObject, AVPlayerViewControllerDelegate {
-        let dismiss: DismissAction
-
-        init(dismiss: DismissAction) {
-            self.dismiss = dismiss
-        }
-
-        func playerViewControllerDidDismiss(_ playerViewController: AVPlayerViewController) {
-            DispatchQueue.main.async { self.dismiss() }
-        }
-    }
-}
 
 // MARK: - Volume Slider
 
