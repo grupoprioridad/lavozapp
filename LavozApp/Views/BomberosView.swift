@@ -158,7 +158,7 @@ struct BomberosView: View {
 
     private func shareButton(for ll: BomberoLlamado) -> some View {
         let text = "Bomberos Pucón — \(ll.texto)"
-        Button {
+        return Button {
             let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)
             guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                   let root = scene.windows.first?.rootViewController else { return }
@@ -273,5 +273,5 @@ struct BomberosView: View {
         f.dateFormat = "EEE d MMM, HH:mm 'hrs'"
         f.locale = Locale(identifier: "es_CL")
         return f.string(from: adjusted)
-    
+    }
 }
