@@ -54,6 +54,7 @@ struct LavozApp: App {
         setupAudio()
         setupNotifications()
         setupNavBarAppearance()
+        setupURLCache()
         OneSignal.initialize("8fda1981-467e-4533-b85a-ba8d8e63057f", withLaunchOptions: nil)
         OneSignal.Notifications.requestPermission({ _ in }, fallbackToSettings: true)
     }
@@ -63,6 +64,15 @@ struct LavozApp: App {
             ContentView()
                 .environmentObject(auth)
         }
+    }
+
+    // Propuesta 4: cache en disco para imágenes (AsyncImage usa URLSession.shared)
+    private func setupURLCache() {
+        URLCache.shared = URLCache(
+            memoryCapacity: 20 * 1024 * 1024,   // 20 MB en RAM
+            diskCapacity:   100 * 1024 * 1024,  // 100 MB en disco
+            diskPath: "lvp_image_cache"
+        )
     }
 
     private func setupAudio() {

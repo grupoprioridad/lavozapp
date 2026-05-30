@@ -1,22 +1,61 @@
 import Foundation
 
+// MARK: - Service
+
 @MainActor
 class NoticiasService: ObservableObject {
     @Published var noticias: [NoticiaItem] = []
     @Published var isLoading = false
     @Published var error: String?
 
+    private let cacheFile: URL = {
+        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("noticias.json")
+    }()
+
     func fetch() async {
-        guard let url = URL(string: "https://www.lavozdepucon.cl/feed/") else { return }
+        // Propuesta 1: mostrar cache inmediatamente si no hay contenido
+        if noticias.isEmpty, let cached = loadCache() {
+            noticias = cached
+        }
+
         isLoading = true
         error = nil
-        defer { isLoading = false }
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            noticias = RSSParser.parse(data)
-        } catch {
-            self.error = "No se pudieron cargar las noticias. Verifica tu conexión."
+
+        guard let feedURL = URL(string: "https://www.lavozdepucon.cl/feed/") else {
+            isLoading = false
+            return
         }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: feedURL)
+
+            // Propuesta 2: parsing en background thread
+            let parsed = await Task.detached(priority: .userInitiated) {
+                RSSParser.parse(data)
+            }.value
+
+            saveCache(parsed)
+            noticias = parsed
+        } catch {
+            if noticias.isEmpty {
+                self.error = "No se pudieron cargar las noticias. Verifica tu conexión."
+            }
+        }
+
+        isLoading = false
+    }
+
+    // MARK: - Cache
+
+    private func loadCache() -> [NoticiaItem]? {
+        guard let data = try? Data(contentsOf: cacheFile) else { return nil }
+        return try? JSONDecoder().decode([NoticiaItem].self, from: data)
+    }
+
+    private func saveCache(_ items: [NoticiaItem]) {
+        guard let data = try? JSONEncoder().encode(items) else { return }
+        try? data.write(to: cacheFile, options: .atomic)
     }
 }
 
@@ -27,6 +66,19 @@ class RSSParser: NSObject, XMLParserDelegate {
     private var currentItem: [String: String] = [:]
     private var currentText = ""
     private var insideItem = false
+
+    // Propuesta 3: regex y DateFormatter estáticos — compilados una sola vez
+    private static let imgSrcRegex  = try! NSRegularExpression(pattern: #"src="(https://[^"]+)""#)
+    private static let imgTagRegex  = try! NSRegularExpression(pattern: "<img[^>]*>")
+    private static let htmlTagRegex = try! NSRegularExpression(pattern: "<[^>]+>")
+    private static let apoyaRegex   = try! NSRegularExpression(pattern: #"\(Apoya[^)]*\)"#)
+
+    private static let pubDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
+        return f
+    }()
 
     static func parse(_ data: Data) -> [NoticiaItem] {
         let delegate = RSSParser()
@@ -91,29 +143,24 @@ class RSSParser: NSObject, XMLParserDelegate {
 
     private func parseDate(_ string: String?) -> Date {
         guard let string else { return Date() }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
-        return f.date(from: string) ?? Date()
+        return Self.pubDateFormatter.date(from: string) ?? Date()
     }
 
     private func extractImageURL(_ html: String) -> URL? {
-        guard let regex = try? NSRegularExpression(pattern: #"src="(https://[^"]+)""#),
-              let match = regex.firstMatch(in: html, range: NSRange(html.startIndex..., in: html)),
-              let range = Range(match.range(at: 1), in: html) else { return nil }
-        return URL(string: String(html[range]))
+        let range = NSRange(html.startIndex..., in: html)
+        guard let match = Self.imgSrcRegex.firstMatch(in: html, range: range),
+              let r = Range(match.range(at: 1), in: html) else { return nil }
+        return URL(string: String(html[r]))
     }
 
     private func extractExcerpt(_ html: String) -> String {
-        func replace(_ pattern: String, with replacement: String, in s: String) -> String {
-            (try? NSRegularExpression(pattern: pattern))?.stringByReplacingMatches(
-                in: s, range: NSRange(s.startIndex..., in: s), withTemplate: replacement) ?? s
+        func replace(_ regex: NSRegularExpression, with t: String, in s: String) -> String {
+            regex.stringByReplacingMatches(in: s, range: NSRange(s.startIndex..., in: s), withTemplate: t)
         }
-        var text = html
-        text = replace("<img[^>]*>", with: "", in: text)
-        text = replace("<[^>]+>", with: "", in: text)
+        var text = replace(Self.imgTagRegex,  with: "", in: html)
+        text = replace(Self.htmlTagRegex, with: "", in: text)
         text = decodeEntities(text)
-        text = replace(#"\(Apoya[^)]*\)"#, with: "", in: text)
+        text = replace(Self.apoyaRegex, with: "", in: text)
         text = text.replacingOccurrences(of: "[…]", with: "")
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }

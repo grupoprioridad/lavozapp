@@ -1,12 +1,13 @@
 import Foundation
 
-struct NoticiaItem: Identifiable {
-    let id = UUID()
+struct NoticiaItem: Identifiable, Codable {
     let titulo: String
     let url: URL
     let fecha: Date
     let imageURL: URL?
     let extracto: String
+
+    var id: String { url.absoluteString }
 
     var fechaDisplay: String {
         NoticiaItem.displayFormatter.string(from: fecha)
