@@ -46,6 +46,8 @@ class RadioPlayer: ObservableObject {
 
     private enum StreamMode { case audio, video, exclusive }
     private var currentMode: StreamMode = .audio
+    private var currentExclusiveURL: URL? = nil
+    private var currentItemNeedsVideoDetection = false
     private var radioBossTitle: String? = nil
 
     // Audio: Icecast MP3 (siempre disponible)
@@ -148,6 +150,7 @@ class RadioPlayer: ObservableObject {
     private func activateVideoMode() {
         guard currentMode != .video else { return }
         currentMode = .video
+        currentItemNeedsVideoDetection = true
         sendLiveNotification()
         let wasPlaying = isPlaying
         sizeObserver?.invalidate()
@@ -164,6 +167,7 @@ class RadioPlayer: ObservableObject {
     private func activateAudioMode() {
         guard currentMode != .audio else { return }
         currentMode = .audio
+        currentItemNeedsVideoDetection = false
         hasVideo = false
         let wasPlaying = isPlaying
         sizeObserver?.invalidate()
@@ -194,8 +198,10 @@ class RadioPlayer: ObservableObject {
     }
 
     private func activateExclusiveMode(url: URL, title: String?, type: String?) {
-        guard currentMode != .exclusive else { return }
+        if currentMode == .exclusive && url == currentExclusiveURL { return }
         currentMode = .exclusive
+        currentExclusiveURL = url
+        currentItemNeedsVideoDetection = type == "video"
         isExclusiveActive = true
         sizeObserver?.invalidate()
         stallObserver?.invalidate()
@@ -217,6 +223,8 @@ class RadioPlayer: ObservableObject {
 
     private func deactivateExclusiveMode() {
         currentMode = .audio
+        currentExclusiveURL = nil
+        currentItemNeedsVideoDetection = false
         isExclusiveActive = false
         hasVideo = false
         sizeObserver?.invalidate()
@@ -278,9 +286,13 @@ class RadioPlayer: ObservableObject {
         stallTimer = nil
         guard player.timeControlStatus == .waitingToPlayAtSpecifiedRate,
               let url = (player.currentItem?.asset as? AVURLAsset)?.url else { return }
+        sizeObserver?.invalidate()
         stallObserver?.invalidate()
         let item = makeItem(url: url)
         player.replaceCurrentItem(with: item)
+        if currentItemNeedsVideoDetection {
+            setupVideoDetection(for: item)
+        }
         setupStallRecovery(for: item)
         player.play()
     }
