@@ -208,7 +208,7 @@ struct RadioView: View {
         ZStack {
             Color.white
             VStack(spacing: 10) {
-                AsyncImage(url: URL(string: "https://j.prioridad.cl/radiolavoz/img/logo-radio-la-voz.png")) { img in
+                AsyncImage(url: URL(string: "https://radiolavoz.cl/img/logo-radio-la-voz.png")) { img in
                     img.resizable().scaledToFit()
                 } placeholder: {
                     Image(systemName: "radio")
