@@ -35,10 +35,10 @@ class BomberosService: ObservableObject {
             if res.ok {
                 llamados = res.llamados
             } else {
-                error = "Error al cargar datos"
+                self.error = "Error al cargar datos"
             }
         } catch {
-            error = "No se pudieron cargar los llamados"
+            self.error = "No se pudieron cargar los llamados"
         }
     }
 }
