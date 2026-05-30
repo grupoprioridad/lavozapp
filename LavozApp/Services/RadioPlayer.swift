@@ -220,7 +220,7 @@ class RadioPlayer: ObservableObject {
     // MARK: - API: Now Playing (RadioBoss via Icecast)
 
     private func fetchNowPlaying() {
-        fetch(endpoint: "/api/now-playing") { [weak self] json in
+        fetchExclusive(endpoint: "/api/now-playing") { [weak self] json in
             let title = json["title"] as? String
             DispatchQueue.main.async {
                 self?.radioBossTitle = title
