@@ -24,7 +24,7 @@ struct BomberosView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("Bomberos")
+                    Text("Emergencias")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.lvpDark)
                 }

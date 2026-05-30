@@ -24,7 +24,7 @@ struct ContentView: View {
             BomberosView()
                 .tabItem {
                     Image(systemName: "flame.fill")
-                    Text("Bomberos")
+                    Text("Emergencias")
                 }
         }
         .tint(Color.lvpRed)
