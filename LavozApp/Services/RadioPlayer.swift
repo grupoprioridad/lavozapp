@@ -65,6 +65,8 @@ class RadioPlayer: ObservableObject {
 
     private var playerObserver: NSKeyValueObservation?
     private var sizeObserver: NSKeyValueObservation?
+    private var stallObserver: NSKeyValueObservation?
+    private var stallTimer: Timer?
     private var healthTimer: Timer?
     private var nowPlayingTimer: Timer?
     private var scheduleTimer: Timer?
@@ -93,7 +95,9 @@ class RadioPlayer: ObservableObject {
                 }
             } else {
                 DispatchQueue.main.async {
-                    self.player.replaceCurrentItem(with: AVPlayerItem(url: self.audioURL))
+                    let item = self.makeItem(url: self.audioURL)
+                    self.player.replaceCurrentItem(with: item)
+                    self.setupStallRecovery(for: item)
                     self.isReady = true
                     self.startTimers()
                     self.fetchLiveNow()
@@ -147,9 +151,13 @@ class RadioPlayer: ObservableObject {
         sendLiveNotification()
         let wasPlaying = isPlaying
         sizeObserver?.invalidate()
-        let item = AVPlayerItem(url: videoURL)
+        stallObserver?.invalidate()
+        stallTimer?.invalidate()
+        stallTimer = nil
+        let item = makeItem(url: videoURL)
         player.replaceCurrentItem(with: item)
         setupVideoDetection(for: item)
+        setupStallRecovery(for: item)
         if wasPlaying { player.play() }
     }
 
@@ -159,8 +167,12 @@ class RadioPlayer: ObservableObject {
         hasVideo = false
         let wasPlaying = isPlaying
         sizeObserver?.invalidate()
-        let item = AVPlayerItem(url: audioURL)
+        stallObserver?.invalidate()
+        stallTimer?.invalidate()
+        stallTimer = nil
+        let item = makeItem(url: audioURL)
         player.replaceCurrentItem(with: item)
+        setupStallRecovery(for: item)
         if wasPlaying { player.play() }
     }
 
@@ -186,13 +198,17 @@ class RadioPlayer: ObservableObject {
         currentMode = .exclusive
         isExclusiveActive = true
         sizeObserver?.invalidate()
-        let item = AVPlayerItem(url: url)
+        stallObserver?.invalidate()
+        stallTimer?.invalidate()
+        stallTimer = nil
+        let item = makeItem(url: url)
         player.replaceCurrentItem(with: item)
         if type == "video" {
             setupVideoDetection(for: item)
         } else {
             hasVideo = false
         }
+        setupStallRecovery(for: item)
         if let t = title, !t.isEmpty { currentTitle = t }
         updateNowPlaying()
         isLoading = true
@@ -204,7 +220,12 @@ class RadioPlayer: ObservableObject {
         isExclusiveActive = false
         hasVideo = false
         sizeObserver?.invalidate()
-        player.replaceCurrentItem(with: AVPlayerItem(url: audioURL))
+        stallObserver?.invalidate()
+        stallTimer?.invalidate()
+        stallTimer = nil
+        let item = makeItem(url: audioURL)
+        player.replaceCurrentItem(with: item)
+        setupStallRecovery(for: item)
         if isPlaying { player.play() }
     }
 
@@ -221,6 +242,44 @@ class RadioPlayer: ObservableObject {
             trigger: nil  // entrega inmediata
         )
         UNUserNotificationCenter.current().add(request)
+    }
+
+    // MARK: - Item factory
+
+    private func makeItem(url: URL) -> AVPlayerItem {
+        let item = AVPlayerItem(url: url)
+        item.preferredForwardBufferDuration = 15
+        return item
+    }
+
+    // MARK: - Stall recovery
+
+    private func setupStallRecovery(for item: AVPlayerItem) {
+        stallObserver = item.observe(\.isPlaybackLikelyToKeepUp, options: [.new]) { [weak self] _, _ in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if item.isPlaybackLikelyToKeepUp {
+                    self.stallTimer?.invalidate()
+                    self.stallTimer = nil
+                } else if self.player.timeControlStatus == .waitingToPlayAtSpecifiedRate {
+                    guard self.stallTimer == nil else { return }
+                    self.stallTimer = Timer.scheduledTimer(withTimeInterval: 8, repeats: false) { [weak self] _ in
+                        self?.reconnectCurrentStream()
+                    }
+                }
+            }
+        }
+    }
+
+    private func reconnectCurrentStream() {
+        stallTimer = nil
+        guard player.timeControlStatus == .waitingToPlayAtSpecifiedRate,
+              let url = (player.currentItem?.asset as? AVURLAsset)?.url else { return }
+        stallObserver?.invalidate()
+        let item = makeItem(url: url)
+        player.replaceCurrentItem(with: item)
+        setupStallRecovery(for: item)
+        player.play()
     }
 
     // MARK: - Video detection
@@ -388,6 +447,8 @@ class RadioPlayer: ObservableObject {
     deinit {
         playerObserver?.invalidate()
         sizeObserver?.invalidate()
+        stallObserver?.invalidate()
+        stallTimer?.invalidate()
         healthTimer?.invalidate()
         nowPlayingTimer?.invalidate()
         scheduleTimer?.invalidate()
