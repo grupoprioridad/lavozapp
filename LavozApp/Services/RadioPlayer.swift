@@ -148,7 +148,7 @@ class RadioPlayer: ObservableObject {
             DispatchQueue.main.async {
                 self?.exclusiveStream = stream
                 if stream.active, let url = stream.url, let urlObj = URL(string: url) {
-                    self?.activateExclusiveMode(url: urlObj, title: stream.title)
+                    self?.activateExclusiveMode(url: urlObj, title: stream.title, type: stream.type)
                 } else if self?.currentMode == .exclusive {
                     self?.deactivateExclusiveMode()
                 }
@@ -156,15 +156,19 @@ class RadioPlayer: ObservableObject {
         }
     }
 
-    private func activateExclusiveMode(url: URL, title: String?) {
+    private func activateExclusiveMode(url: URL, title: String?, type: String?) {
         guard currentMode != .exclusive else { return }
         currentMode = .exclusive
         isExclusiveActive = true
-        hasVideo = false
         let wasPlaying = isPlaying
         sizeObserver?.invalidate()
         let item = AVPlayerItem(url: url)
         player.replaceCurrentItem(with: item)
+        if type == "video" {
+            setupVideoDetection(for: item)
+        } else {
+            hasVideo = false
+        }
         if let t = title, !t.isEmpty { currentTitle = t }
         if wasPlaying { player.play() }
     }
