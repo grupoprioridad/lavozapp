@@ -21,6 +21,14 @@ struct ShowInfo: Identifiable {
     }
 }
 
+struct AppExclusiveStream: Decodable {
+    let active: Bool
+    let type: String?
+    let url: String?
+    let title: String?
+    let description: String?
+}
+
 class RadioPlayer: ObservableObject {
     static let shared = RadioPlayer()
 
@@ -30,10 +38,12 @@ class RadioPlayer: ObservableObject {
     @Published var currentTitle = "Cargando…"
     @Published var liveShow: ShowInfo?
     @Published var nextShow: ShowInfo?
+    @Published var exclusiveStream: AppExclusiveStream?
+    @Published var isExclusiveActive = false
 
     let player: AVPlayer
 
-    private enum StreamMode { case audio, video }
+    private enum StreamMode { case audio, video, exclusive }
     private var currentMode: StreamMode = .audio
     private var radioBossTitle: String? = nil
 
@@ -48,6 +58,7 @@ class RadioPlayer: ObservableObject {
     private var healthTimer: Timer?
     private var nowPlayingTimer: Timer?
     private var scheduleTimer: Timer?
+    private var exclusiveTimer: Timer?
 
     private init() {
         // Arrancar siempre en modo audio (igual que el web)
@@ -57,7 +68,8 @@ class RadioPlayer: ObservableObject {
         setupRemoteControls()
         fetchLiveNow()
         fetchNowPlaying()
-        checkAndSwitch()  // primera verificación inmediata
+        checkAndSwitch()
+        fetchAppExclusiveStream()
 
         healthTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
             self?.checkAndSwitch()
@@ -67,6 +79,9 @@ class RadioPlayer: ObservableObject {
         }
         scheduleTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             self?.fetchLiveNow()
+        }
+        exclusiveTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            self?.fetchAppExclusiveStream()
         }
     }
 
@@ -112,6 +127,45 @@ class RadioPlayer: ObservableObject {
         let item = AVPlayerItem(url: audioURL)
         player.replaceCurrentItem(with: item)
         if wasPlaying { player.play() }
+    }
+
+    // MARK: - Exclusive App Stream
+
+    func fetchAppExclusiveStream() {
+        fetch(endpoint: "/api/app-stream") { [weak self] json in
+            guard let data = try? JSONSerialization.data(withJSONObject: json),
+                  let stream = try? JSONDecoder().decode(AppExclusiveStream.self, from: data) else { return }
+            DispatchQueue.main.async {
+                self?.exclusiveStream = stream
+                if stream.active, let url = stream.url, let urlObj = URL(string: url) {
+                    self?.activateExclusiveMode(url: urlObj, title: stream.title)
+                } else if self?.currentMode == .exclusive {
+                    self?.deactivateExclusiveMode()
+                }
+            }
+        }
+    }
+
+    private func activateExclusiveMode(url: URL, title: String?) {
+        guard currentMode != .exclusive else { return }
+        currentMode = .exclusive
+        isExclusiveActive = true
+        hasVideo = false
+        let wasPlaying = isPlaying
+        sizeObserver?.invalidate()
+        let item = AVPlayerItem(url: url)
+        player.replaceCurrentItem(with: item)
+        if let t = title, !t.isEmpty { currentTitle = t }
+        if wasPlaying { player.play() }
+    }
+
+    private func deactivateExclusiveMode() {
+        currentMode = .audio
+        isExclusiveActive = false
+        hasVideo = false
+        sizeObserver?.invalidate()
+        player.replaceCurrentItem(with: AVPlayerItem(url: audioURL))
+        if isPlaying { player.play() }
     }
 
     // MARK: - Notificación de video en vivo

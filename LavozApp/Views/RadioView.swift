@@ -11,6 +11,7 @@ struct RadioView: View {
     }()
     @State private var schedule: [ShowInfo] = []
     @State private var scheduleLoading = true
+    @State private var showFullscreenVideo = false
 
     private let days: [(key: String, label: String)] = [
         ("monday","LUN"),("tuesday","MAR"),("wednesday","MIÉ"),
@@ -52,6 +53,9 @@ struct RadioView: View {
                         .foregroundColor(.lvpDark)
                 }
             }
+        }
+        .fullScreenCover(isPresented: $showFullscreenVideo) {
+            FullscreenVideoView(player: player.player)
         }
         .onAppear {
             if !player.isPlaying { player.play() }
@@ -123,14 +127,41 @@ struct RadioView: View {
         VStack(spacing: 0) {
             ZStack(alignment: .topTrailing) {
                 if player.hasVideo {
-                    RadioVideoView(player: player.player)
-                        .frame(height: 200)
+                    ZStack(alignment: .bottomTrailing) {
+                        RadioVideoView(player: player.player)
+                            .frame(height: 200)
+
+                        Button {
+                            showFullscreenVideo = true
+                        } label: {
+                            Image(systemName: "arrow.up.backward.and.arrow.down.forward")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 36, height: 36)
+                                .background(Color.black.opacity(0.5))
+                                .clipShape(Circle())
+                        }
+                        .padding(10)
+                    }
                 } else {
                     videoFallback
                         .frame(height: 200)
                 }
 
-                if player.isPlaying {
+                if player.isExclusiveActive {
+                    HStack(spacing: 4) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 8))
+                        Text("EXCLUSIVO")
+                            .font(.lvpBadge)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.orange)
+                    .cornerRadius(4)
+                    .padding(8)
+                } else if player.isPlaying {
                     HStack(spacing: 4) {
                         Circle().fill(Color.white).frame(width: 6, height: 6)
                         Text("EN VIVO")
@@ -529,6 +560,50 @@ struct RadioVideoView: UIViewControllerRepresentable {
 
     func updateUIViewController(_ c: AVPlayerViewController, context: Context) {
         c.player = player
+    }
+}
+
+// MARK: - Fullscreen Video
+
+struct FullscreenVideoView: View {
+    let player: AVPlayer
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        FullscreenPlayerVC(player: player, dismiss: dismiss)
+            .ignoresSafeArea()
+            .statusBarHidden()
+    }
+}
+
+struct FullscreenPlayerVC: UIViewControllerRepresentable {
+    let player: AVPlayer
+    let dismiss: DismissAction
+
+    func makeUIViewController(context: Context) -> AVPlayerViewController {
+        let c = AVPlayerViewController()
+        c.player = player
+        c.showsPlaybackControls = true
+        c.videoGravity = .resizeAspect
+        c.updatesNowPlayingInfoCenter = false
+        c.entersFullScreenWhenPlaybackBegins = true
+        context.coordinator.controller = c
+        return c
+    }
+
+    func updateUIViewController(_ c: AVPlayerViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(dismiss: dismiss)
+    }
+
+    class Coordinator: NSObject, AVPlayerViewControllerDelegate {
+        let dismiss: DismissAction
+        weak var controller: AVPlayerViewController?
+
+        init(dismiss: DismissAction) {
+            self.dismiss = dismiss
+        }
     }
 }
 
