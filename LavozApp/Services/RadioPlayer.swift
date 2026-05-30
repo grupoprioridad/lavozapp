@@ -94,6 +94,7 @@ class RadioPlayer: ObservableObject {
     // MARK: - Stream switching (replica checkAndSwitch del web)
 
     private func checkAndSwitch() {
+        guard currentMode != .exclusive else { return }
         fetch(endpoint: "/api/stream-health") { [weak self] json in
             let videoAvailable = json["video"] as? Bool ?? false
             DispatchQueue.main.async {
@@ -339,5 +340,6 @@ class RadioPlayer: ObservableObject {
         healthTimer?.invalidate()
         nowPlayingTimer?.invalidate()
         scheduleTimer?.invalidate()
+        exclusiveTimer?.invalidate()
     }
 }

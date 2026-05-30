@@ -587,7 +587,7 @@ struct FullscreenPlayerVC: UIViewControllerRepresentable {
         c.videoGravity = .resizeAspect
         c.updatesNowPlayingInfoCenter = false
         c.entersFullScreenWhenPlaybackBegins = true
-        context.coordinator.controller = c
+        c.delegate = context.coordinator
         return c
     }
 
@@ -599,10 +599,17 @@ struct FullscreenPlayerVC: UIViewControllerRepresentable {
 
     class Coordinator: NSObject, AVPlayerViewControllerDelegate {
         let dismiss: DismissAction
-        weak var controller: AVPlayerViewController?
 
         init(dismiss: DismissAction) {
             self.dismiss = dismiss
+        }
+
+        func playerViewControllerShouldDismiss(_ playerViewController: AVPlayerViewController) -> Bool {
+            true
+        }
+
+        func playerViewControllerDidDismiss(_ playerViewController: AVPlayerViewController) {
+            DispatchQueue.main.async { self.dismiss() }
         }
     }
 }
