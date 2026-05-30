@@ -14,7 +14,7 @@ struct ShowInfo: Identifiable {
     let isLive: Bool
 
     var thumbnailURL: URL? {
-        let base = "https://j.prioridad.cl/radiolavoz/img/thumbnails/"
+        let base = "https://radiolavoz.cl/img/thumbnails/"
         let file = thumbnail ?? "logo.png"
         guard let encoded = file.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else { return nil }
         return URL(string: base + encoded)
@@ -41,7 +41,7 @@ class RadioPlayer: ObservableObject {
     // Video: HLS (solo cuando hay señal de video)
     private let audioURL = URL(string: "https://live.lavozdepucon.cl:8000/stream.mp3")!
     private let videoURL = URL(string: "https://live.mtna.tv/hls/lvp/primary/index.m3u8")!
-    private let apiBase  = "https://j.prioridad.cl/radiolavoz"
+    private let apiBase  = "https://radiolavoz.cl"
 
     private var playerObserver: NSKeyValueObservation?
     private var sizeObserver: NSKeyValueObservation?
