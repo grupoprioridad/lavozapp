@@ -462,20 +462,24 @@ struct RadioView: View {
                 .font(.lvpMicro)
                 .spaced(1.2)
                 .foregroundColor(.lvpTextMuted)
-            shareBtn("facebook", color: "#1877f2")
-            shareBtn("twitter", color: "#000000")
-            shareBtn("whatsapp", color: "#25d366")
-            shareBtn("telegram", color: "#0088cc")
+            shareButton
         }
     }
 
-    private func shareBtn(_ name: String, color: String) -> some View {
-        Button(action: {}) {
+    private var shareButton: some View {
+        Button {
+            let text = "Escucha Radio La Voz de Pucón en vivo 📻"
+            let url = URL(string: "https://radiolavoz.cl")!
+            let av = UIActivityViewController(activityItems: [text, url], applicationActivities: nil)
+            guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let root = scene.windows.first?.rootViewController else { return }
+            root.present(av, animated: true)
+        } label: {
             Image(systemName: "square.and.arrow.up")
                 .font(.caption)
                 .foregroundColor(.white)
                 .frame(width: 30, height: 30)
-                .background(Color(hex: color))
+                .background(Color.lvpRed)
                 .clipShape(Circle())
         }
     }
