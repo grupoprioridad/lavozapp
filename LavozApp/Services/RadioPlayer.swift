@@ -75,10 +75,11 @@ class RadioPlayer: ObservableObject {
 
         setupPlaybackObserver()
         setupRemoteControls()
+        // Verificar contenido exclusivo primero
+        fetchAppExclusiveStream()
         fetchLiveNow()
         fetchNowPlaying()
         checkAndSwitch()
-        fetchAppExclusiveStream()
 
         healthTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
             self?.checkAndSwitch()
@@ -170,6 +171,7 @@ class RadioPlayer: ObservableObject {
             hasVideo = false
         }
         if let t = title, !t.isEmpty { currentTitle = t }
+        updateNowPlaying()
         if wasPlaying { player.play() }
     }
 
@@ -224,6 +226,7 @@ class RadioPlayer: ObservableObject {
     // MARK: - API: Now Playing (RadioBoss via Icecast)
 
     private func fetchNowPlaying() {
+        guard !isExclusiveActive else { return }
         fetchExclusive(endpoint: "/api/now-playing") { [weak self] json in
             let title = json["title"] as? String
             DispatchQueue.main.async {

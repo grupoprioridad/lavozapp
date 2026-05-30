@@ -16,7 +16,8 @@ private class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
 
 func presentFullscreenVideo(_ player: AVPlayer) {
     guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-          let root = scene.windows.first?.rootViewController else { return }
+          let root = scene.windows.first?.rootViewController,
+          root.presentedViewController == nil else { return }
 
     let playerVC = AVPlayerViewController()
     playerVC.player = player

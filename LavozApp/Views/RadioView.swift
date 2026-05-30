@@ -55,11 +55,19 @@ struct RadioView: View {
             }
         }
         .onAppear {
+            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
             if !player.isPlaying { player.play() }
             loadSchedule(day: selectedDay)
         }
+        .onDisappear {
+            UIDevice.current.endGeneratingDeviceOrientationNotifications()
+        }
         .onChange(of: selectedDay) { day in
             loadSchedule(day: day)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            guard player.hasVideo, UIDevice.current.orientation.isLandscape else { return }
+            presentFullscreenVideo(player.player)
         }
     }
 
@@ -149,7 +157,7 @@ struct RadioView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "star.fill")
                             .font(.system(size: 8))
-                        Text("EXCLUSIVO")
+                        Text("EXCLUSIVO PUCONAPP")
                             .font(.lvpBadge)
                     }
                     .foregroundColor(.white)
