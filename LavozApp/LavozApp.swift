@@ -19,44 +19,28 @@ func presentFullscreenVideo(_ player: AVPlayer) {
           let root = scene.windows.first?.rootViewController,
           root.presentedViewController == nil else { return }
 
+    // Crear un AVPlayer independiente para fullscreen para evitar conflictos
+    // con el AVPlayerViewController inline que usa el mismo reproductor
+    let currentURL = (player.currentItem?.asset as? AVURLAsset)?.url
+        ?? URL(string: "https://live.lavozdepucon.cl:8000/stream.mp3")!
+    let fullscreenPlayer = AVPlayer(url: currentURL)
+    fullscreenPlayer.play()
+
     let playerVC = AVPlayerViewController()
-    playerVC.player = player
+    playerVC.player = fullscreenPlayer
     playerVC.showsPlaybackControls = true
     playerVC.videoGravity = .resizeAspect
     playerVC.updatesNowPlayingInfoCenter = false
     playerVC.delegate = FullscreenDelegate.shared
 
-    let container = FullscreenContainerVC()
-    container.addChild(playerVC)
-    container.view.addSubview(playerVC.view)
-    playerVC.view.frame = container.view.bounds
-    playerVC.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    playerVC.didMove(toParent: container)
-
-    container.modalPresentationStyle = .fullScreen
-    root.present(container, animated: true)
-}
-
-private class FullscreenContainerVC: UIViewController {
-    override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .allButUpsideDown }
-    override var shouldAutorotate: Bool { true }
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        UIDevice.current.setValue(UIDeviceOrientation.landscapeLeft.rawValue, forKey: "orientation")
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        UIDevice.current.setValue(UIDeviceOrientation.portrait.rawValue, forKey: "orientation")
-    }
+    root.present(playerVC, animated: true)
 }
 
 private class FullscreenDelegate: NSObject, AVPlayerViewControllerDelegate {
     static let shared = FullscreenDelegate()
 
     func playerViewControllerDidDismiss(_ playerViewController: AVPlayerViewController) {
-        UIDevice.current.setValue(UIDeviceOrientation.portrait.rawValue, forKey: "orientation")
+        playerViewController.player?.pause()
     }
 }
 

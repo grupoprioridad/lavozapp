@@ -56,8 +56,11 @@ struct RadioView: View {
         }
         .onAppear {
             UIDevice.current.beginGeneratingDeviceOrientationNotifications()
-            if !player.isPlaying { player.play() }
+            if player.isReady && !player.isPlaying { player.play() }
             loadSchedule(day: selectedDay)
+        }
+        .onReceive(player.$isReady) { ready in
+            if ready && !player.isPlaying { player.play() }
         }
         .onDisappear {
             UIDevice.current.endGeneratingDeviceOrientationNotifications()
@@ -564,7 +567,7 @@ struct RadioVideoView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ c: AVPlayerViewController, context: Context) {
-        c.player = player
+        // AVPlayer is a singleton — no need to reassign on every re-render
     }
 }
 

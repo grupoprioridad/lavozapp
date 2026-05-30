@@ -40,6 +40,7 @@ class RadioPlayer: ObservableObject {
     @Published var nextShow: ShowInfo?
     @Published var exclusiveStream: AppExclusiveStream?
     @Published var isExclusiveActive = false
+    @Published var isReady = false
 
     let player: AVPlayer
 
@@ -70,17 +71,40 @@ class RadioPlayer: ObservableObject {
     private var exclusiveTimer: Timer?
 
     private init() {
-        // Arrancar siempre en modo audio (igual que el web)
-        player = AVPlayer(playerItem: AVPlayerItem(url: audioURL))
+        player = AVPlayer()
 
         setupPlaybackObserver()
         setupRemoteControls()
-        // Verificar contenido exclusivo primero
-        fetchAppExclusiveStream()
-        fetchLiveNow()
-        fetchNowPlaying()
-        checkAndSwitch()
+        initialSetup()
+    }
 
+    /// Verifica contenido exclusivo primero; si no hay, arranca en modo audio
+    private func initialSetup() {
+        fetchExclusive(endpoint: "/api/app-stream") { [weak self] json in
+            guard let self = self else { return }
+            if let data = try? JSONSerialization.data(withJSONObject: json),
+               let stream = try? JSONDecoder().decode(AppExclusiveStream.self, from: data),
+               stream.active, let url = stream.url, let urlObj = URL(string: url) {
+                DispatchQueue.main.async {
+                    self.exclusiveStream = stream
+                    self.activateExclusiveMode(url: urlObj, title: stream.title, type: stream.type)
+                    self.isReady = true
+                    self.startTimers()
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.player.replaceCurrentItem(with: AVPlayerItem(url: self.audioURL))
+                    self.isReady = true
+                    self.startTimers()
+                    self.fetchLiveNow()
+                    self.fetchNowPlaying()
+                    self.checkAndSwitch()
+                }
+            }
+        }
+    }
+
+    private func startTimers() {
         healthTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
             self?.checkAndSwitch()
         }
@@ -161,7 +185,6 @@ class RadioPlayer: ObservableObject {
         guard currentMode != .exclusive else { return }
         currentMode = .exclusive
         isExclusiveActive = true
-        let wasPlaying = isPlaying
         sizeObserver?.invalidate()
         let item = AVPlayerItem(url: url)
         player.replaceCurrentItem(with: item)
@@ -172,7 +195,8 @@ class RadioPlayer: ObservableObject {
         }
         if let t = title, !t.isEmpty { currentTitle = t }
         updateNowPlaying()
-        if wasPlaying { player.play() }
+        isLoading = true
+        player.play()
     }
 
     private func deactivateExclusiveMode() {
