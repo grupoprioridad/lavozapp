@@ -156,7 +156,7 @@ struct SocioLVPView: View {
             VStack(spacing: 0) {
                 // Red header
                 VStack(spacing: 4) {
-                    Text("RADIO LA VOZ DE PUCÓN")
+                    Text("LA VOZ DE PUCÓN")
                         .font(.lvpMicro)
                         .spaced(2)
                         .foregroundColor(.white.opacity(0.8))
@@ -211,6 +211,12 @@ struct SocioLVPView: View {
             .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.lvpGray200))
             .padding(.horizontal, 24)
+            
+            Text("Usa esta credencial para canjear beneficios")
+                .font(.lvpCaption)
+                .foregroundColor(.lvpTextSecondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, 24)
             
             // Beneficios
             if !auth.beneficios.isEmpty {
