@@ -45,7 +45,7 @@ private class FullscreenDelegate: NSObject, AVPlayerViewControllerDelegate {
 }
 
 @main
-struct LavozApp: App {
+struct PuconApp: App {
     @StateObject private var auth = AuthService.shared
 
     private static let notificationDelegate = NotificationDelegate()

@@ -1,4 +1,4 @@
-name: LavozApp
+name: PuconApp
 
 packages:
   OneSignal:
@@ -20,7 +20,7 @@ settings:
     DEVELOPMENT_TEAM: ""  # Agrega tu Team ID de Apple Developer aquí
 
 targets:
-  LavozApp:
+  PuconApp:
     type: application
     platform: iOS
     deploymentTarget: "15.0"
@@ -62,13 +62,13 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: cl.prioridad.puconapp
-        CODE_SIGN_ENTITLEMENTS: LavozApp/LavozApp.entitlements
+        CODE_SIGN_ENTITLEMENTS: LavozApp/PuconApp.entitlements
 
 schemes:
-  LavozApp:
+  PuconApp:
     build:
       targets:
-        LavozApp: all
+        PuconApp: all
     run:
       config: Debug
     test:
