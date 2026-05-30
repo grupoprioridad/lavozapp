@@ -604,10 +604,6 @@ struct FullscreenPlayerVC: UIViewControllerRepresentable {
             self.dismiss = dismiss
         }
 
-        func playerViewControllerShouldDismiss(_ playerViewController: AVPlayerViewController) -> Bool {
-            true
-        }
-
         func playerViewControllerDidDismiss(_ playerViewController: AVPlayerViewController) {
             DispatchQueue.main.async { self.dismiss() }
         }
