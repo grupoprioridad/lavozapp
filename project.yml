@@ -39,7 +39,9 @@ targets:
           - audio
           - fetch
           - remote-notification
-        UILaunchStoryboardName: LaunchScreen
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+          UIImageName: LaunchLogo
         UIRequiredDeviceCapabilities:
           - armv7
         UISupportedInterfaceOrientations:
