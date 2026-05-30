@@ -53,6 +53,15 @@ class RadioPlayer: ObservableObject {
     private let videoURL = URL(string: "https://live.mtna.tv/hls/lvp/primary/index.m3u8")!
     private let apiBase  = "https://radiolavoz.cl"
 
+    // App token para contenido exclusivo — identifica que el request viene de la app nativa
+    // El backend debe validar este header en /api/app-stream
+    private static var appToken: String {
+        let a = "4f8c3b2a"
+        let b = "1d9e7f05"
+        let c = "6a2b8d3e"
+        return "lvp_app_\(a)\(b)\(c)"
+    }
+
     private var playerObserver: NSKeyValueObservation?
     private var sizeObserver: NSKeyValueObservation?
     private var healthTimer: Timer?
@@ -133,7 +142,7 @@ class RadioPlayer: ObservableObject {
     // MARK: - Exclusive App Stream
 
     func fetchAppExclusiveStream() {
-        fetch(endpoint: "/api/app-stream") { [weak self] json in
+        fetchExclusive(endpoint: "/api/app-stream") { [weak self] json in
             guard let data = try? JSONSerialization.data(withJSONObject: json),
                   let stream = try? JSONDecoder().decode(AppExclusiveStream.self, from: data) else { return }
             DispatchQueue.main.async {
@@ -254,6 +263,17 @@ class RadioPlayer: ObservableObject {
     private func fetch(endpoint: String, completion: @escaping ([String: Any]) -> Void) {
         guard let url = URL(string: apiBase + endpoint) else { return }
         URLSession.shared.dataTask(with: url) { data, _, _ in
+            guard let d = data,
+                  let json = try? JSONSerialization.jsonObject(with: d) as? [String: Any] else { return }
+            completion(json)
+        }.resume()
+    }
+
+    private func fetchExclusive(endpoint: String, completion: @escaping ([String: Any]) -> Void) {
+        guard let url = URL(string: apiBase + endpoint) else { return }
+        var req = URLRequest(url: url)
+        req.setValue(Self.appToken, forHTTPHeaderField: "X-App-Token")
+        URLSession.shared.dataTask(with: req) { data, _, _ in
             guard let d = data,
                   let json = try? JSONSerialization.jsonObject(with: d) as? [String: Any] else { return }
             completion(json)
