@@ -78,19 +78,20 @@ struct SocioLVPView: View {
                 .padding(.horizontal, 24)
                 
                 Button(action: login) {
-                    if auth.isLoading {
-                        ProgressView().tint(.white)
-                    } else {
-                        Text("Enviar código")
-                            .font(.lvpBody.weight(.semibold))
-                            .foregroundColor(.white)
+                    ZStack {
+                        if auth.isLoading {
+                            ProgressView().tint(.white)
+                        } else {
+                            Text("Enviar código")
+                                .font(.lvpBody.weight(.semibold))
+                                .foregroundColor(.white)
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(email.isEmpty ? Color.lvpGray200 : Color.lvpRed)
+                    .cornerRadius(8)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 48)
-                .background(email.isEmpty ? Color.lvpGray200 : Color.lvpRed)
-                .cornerRadius(8)
-                .contentShape(Rectangle())
                 .disabled(email.isEmpty || auth.isLoading)
                 .padding(.horizontal, 24)
                 
@@ -115,19 +116,20 @@ struct SocioLVPView: View {
                 .padding(.horizontal, 24)
                 
                 Button(action: verify) {
-                    if auth.isLoading {
-                        ProgressView().tint(.white)
-                    } else {
-                        Text("Verificar")
-                            .font(.lvpBody.weight(.semibold))
-                            .foregroundColor(.white)
+                    ZStack {
+                        if auth.isLoading {
+                            ProgressView().tint(.white)
+                        } else {
+                            Text("Verificar")
+                                .font(.lvpBody.weight(.semibold))
+                                .foregroundColor(.white)
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(codigo.isEmpty ? Color.lvpGray200 : Color.lvpRed)
+                    .cornerRadius(8)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 48)
-                .background(codigo.isEmpty ? Color.lvpGray200 : Color.lvpRed)
-                .cornerRadius(8)
-                .contentShape(Rectangle())
                 .disabled(codigo.isEmpty || auth.isLoading)
                 .padding(.horizontal, 24)
                 
