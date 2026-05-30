@@ -255,13 +255,16 @@ class RadioPlayer: ObservableObject {
     // MARK: - Stall recovery
 
     private func setupStallRecovery(for item: AVPlayerItem) {
+        var hasPlayedSuccessfully = false
         stallObserver = item.observe(\.isPlaybackLikelyToKeepUp, options: [.new]) { [weak self] _, _ in
             DispatchQueue.main.async {
                 guard let self else { return }
                 if item.isPlaybackLikelyToKeepUp {
+                    hasPlayedSuccessfully = true
                     self.stallTimer?.invalidate()
                     self.stallTimer = nil
-                } else if self.player.timeControlStatus == .waitingToPlayAtSpecifiedRate {
+                } else if hasPlayedSuccessfully,
+                          self.player.timeControlStatus == .waitingToPlayAtSpecifiedRate {
                     guard self.stallTimer == nil else { return }
                     self.stallTimer = Timer.scheduledTimer(withTimeInterval: 8, repeats: false) { [weak self] _ in
                         self?.reconnectCurrentStream()
